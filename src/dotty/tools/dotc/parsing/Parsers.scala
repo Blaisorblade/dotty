@@ -113,6 +113,13 @@ object Parsers {
 
   }
 
+  /**
+   * Hand-written recursive-descent parser, based on (a slight variation) of the
+   * official Scala EBNF grammar and using slightly more advanced ideas from
+   * LL(1) parsing.
+   * Methods that parse non-terminals have the same name as the corresponding
+   * non-terminal.
+   */
   class Parser(source: SourceFile)(implicit ctx: Context) extends ParserCommon(source) {
 
     val in: Scanner = new Scanner(source)
@@ -136,6 +143,11 @@ object Parsers {
     def isLiteral = literalTokens contains in.token
     def isNumericLit = numericLitTokens contains in.token
     def isModifier = modifierTokens contains in.token
+
+    /**
+      * Method is*Intro tests if the next token belongs to the FIRST set for
+      * non-terminal Foo.
+      */
     def isExprIntro = canStartExpressionTokens contains in.token
     def isTemplateIntro = templateIntroTokens contains in.token
     def isDclIntro = dclIntroTokens contains in.token
@@ -505,7 +517,7 @@ object Parsers {
       if (t1 ne t) t1 else dotSelectors(selector(t), finish)
     }
 
-    /** Dotelectors ::= { `.' ident()
+    /** DotSelectors ::= { `.' ident()
      *
      *  Accept `.' separated identifiers acting as a selectors on given tree `t`.
      *  @param finish   An alternative parse in case the token following a `.' is not an identifier.
@@ -2142,6 +2154,10 @@ object Parsers {
       var self: ValDef = EmptyValDef
       val stats = new ListBuffer[Tree]
       if (isExprIntro) {
+        /*
+         * Self-type annotations overlap with expressions. If we find `=>`, we
+         * "reinterpret" the expression we parsed as an identifier.
+         */
         val first = expr1()
         if (in.token == ARROW) {
           first match {
