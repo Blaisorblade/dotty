@@ -755,6 +755,22 @@ object messages {
            |""".stripMargin
   }
 
+  case class IllegalFormalParameter()(implicit ctx: Context) extends Message(28) {
+    val kind = "Syntax"
+    val msg = "not a legal formal parameter"
+    val explanation =
+      hl"""
+        |"""
+  }
+
+  case class IllegalSelfTypeClauseIdentifier()(implicit ctx: Context) extends Message(29) {
+    val kind = "Syntax"
+    val msg = "not a legal formal self-type clause"
+    val explanation =
+      hl"""
+        |"""
+  }
+
   case class IllegalLiteral()(implicit ctx: Context) extends Message(28) {
     val kind = "Syntax"
     val msg = "illegal literal"
