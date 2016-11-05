@@ -40,8 +40,28 @@ object Parsers {
     def nonePositive: Boolean = parCounts forall (_ <= 0)
   }
 
+  /**
+    * Represents the parsing context. Parsing rules change inside
+    * parentheses, inside blocks, and inside patterns from elsewhere.
+    * Used especially when parsing expressions.
+    */
   @sharable object Location extends Enumeration {
-    val InParens, InBlock, InPattern, ElseWhere = Value
+    /**
+      * Location when parsing inside parentheses.
+      */
+    val InParens = Value
+    /**
+      * Location when parsing inside a block.
+      */
+    val InBlock = Value
+    /**
+      * Location when parsing inside a pattern.
+      */
+    val InPattern = Value
+    /**
+      * Location when parsing outside of parentheses, blocks and patterns.
+      */
+    val ElseWhere = Value
   }
 
   @sharable object ParamOwner extends Enumeration {
@@ -116,7 +136,7 @@ object Parsers {
   /**
    * Hand-written recursive-descent parser, based on (a slight variation) of the
    * official Scala EBNF grammar and using slightly more advanced ideas from
-   * LL(1) parsing.
+   * LL(1) parsing. Beware: this grammar is not LL(1) and is ambiguous.
    * Methods that parse non-terminals have the same name as the corresponding
    * non-terminal.
    */
@@ -163,7 +183,7 @@ object Parsers {
 /* ------------- ERROR HANDLING ------------------------------------------- */
 
     /** The offset of the last time when a statement on a new line was definitely
-     *  encountered in the current scope or an outer scope\
+     *  encountered in the current scope or an outer scope.
      */
     private var lastStatOffset = -1
 
@@ -943,8 +963,11 @@ object Parsers {
       }
     }
 
-    /** Expr              ::=  FunParams `=>' Expr
+    /** The following *methods* accept expressions. Relevant grammar:
+     *
+     *  Expr              ::=  FunParams `=>' Expr
      *                      |  Expr1
+     *                      |  ...
      *  FunParams         ::=  Bindings
      *                      |  [`implicit'] Id
      *                      |  `_'
@@ -972,11 +995,22 @@ object Parsers {
      *                      | `:' Annotation {Annotation}
      *                      | `:' `_' `*'
      */
+
+    /**
+     *  ExprInParens      ::=  PostfixExpr `:' Type
+     *                      |  Expr
+     */
     val exprInParens = () => expr(Location.InParens)
 
     def expr(): Tree = expr(Location.ElseWhere)
 
+    /**
+      * Depending on location, accept Expr (if location = Location.Elsewhere),
+      * ExprInParens (if location = Location.InParens), BlockResult
+      * (if location = Location.InBlock). Location.InPattern is not allowed.
+      */
     def expr(location: Location.Value): Tree = {
+      assert(location != Location.InPattern)
       val saved = placeholderParams
       placeholderParams = Nil
       val t = expr1(location)
@@ -1107,8 +1141,17 @@ object Parsers {
       }
     }
 
-    /** Expr         ::= implicit Id `=>' Expr
-     *  BlockResult  ::= implicit Id [`:' InfixType] `=>' Block
+    /**
+     * Accept an implicit closure.
+     * This parser is used for both BlockResult (with location =
+     * Location.InBlock) and for Expr (with any other location).
+     *
+     * Grammar:
+     *
+     * Expr         ::= ...
+     *                | implicit Id `=>' Expr
+     * BlockResult  ::= ...
+     *                | implicit Id [`:' InfixType] `=>' Block
      */
     def implicitClosure(start: Int, location: Location.Value, implicitMod: Option[Mod] = None): Tree = {
       var mods = atPos(start) { Modifiers(Implicit) }
@@ -1122,6 +1165,9 @@ object Parsers {
       closureRest(start, location, convertToParam(paramExpr, mods) :: Nil)
     }
 
+    /**
+      * If location = Location.InBlock, accept `=>' Block, else accept `=>' Expr.
+      */
     def closureRest(start: Int, location: Location.Value, params: List[Tree]): Tree =
       atPos(start, in.offset) {
         accept(ARROW)
@@ -2218,7 +2264,9 @@ object Parsers {
       defOrDcl(start, mods)
     }
 
-    /** BlockStatSeq ::= { BlockStat semi } [ResultExpr]
+    /**
+     *  The
+     *  BlockStatSeq ::= { BlockStat semi } [ResultExpr]
      *  BlockStat    ::= Import
      *                 | Annotations [implicit] [lazy] Def
      *                 | Annotations LocalModifiers TmplDef
