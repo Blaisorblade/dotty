@@ -757,19 +757,19 @@ object messages {
            |""".stripMargin
   }
 
-  case class IllegalFormalParameter()(implicit ctx: Context) extends Message(28) {
+  case class IllegalFormalParameter(tree: untpd.Tree)(implicit ctx: Context) extends Message(28) {
     val kind = "Syntax"
     val msg = "not a legal formal parameter"
     val explanation =
-      hl"""
+      hl"""Expected formal parameter, found $tree.
         |"""
   }
 
-  case class IllegalSelfTypeClauseIdentifier()(implicit ctx: Context) extends Message(29) {
+  case class IllegalSelfTypeClauseIdentifier(tree: untpd.Tree)(implicit ctx: Context) extends Message(29) {
     val kind = "Syntax"
     val msg = "not a legal formal self-type clause"
     val explanation =
-      hl"""
+      hl"""Expected self-type clause, found $tree.
         |"""
   }
 

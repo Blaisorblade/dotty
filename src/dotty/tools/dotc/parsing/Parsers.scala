@@ -323,14 +323,15 @@ object Parsers {
     /** Convert tree to formal parameter list
     */
     def convertToParams(tree: Tree): List[ValDef] = tree match {
-      case Parens(t)  => convertToParam(t) :: Nil
-      case Tuple(ts)  => ts map (convertToParam(_))
-      case t          => convertToParam(t) :: Nil
+      case Parens(t)  => convertToParam(t)() :: Nil
+      case Tuple(ts)  => ts map (convertToParam(_)())
+      case t          => convertToParam(t)() :: Nil
     }
 
     /** Convert tree to formal parameter
     */
-    def convertToParam(tree: Tree, mods: Modifiers = Modifiers(), errorMsg: Message = IllegalFormalParameter()): ValDef = tree match {
+    //def convertToParam(tree: Tree, mods: Modifiers = Modifiers())(errorMsg: Message = IllegalFormalParameter(tree)): ValDef = tree match {
+    def convertToParam(tree: Tree, mods: Modifiers = Modifiers())(implicit errorMsg: Message = IllegalFormalParameter(tree)): ValDef = tree match {
       case Ident(name) =>
         makeParameter(name.asTermName, TypeTree(), mods) withPos tree.pos
       case Typed(Ident(name), tpt) =>
@@ -2210,7 +2211,7 @@ object Parsers {
             case Typed(tree @ This(tpnme.EMPTY), tpt) =>
               self = makeSelfDef(nme.WILDCARD, tpt).withPos(first.pos)
             case _ =>
-              val ValDef(name, tpt, _) = convertToParam(first, errorMsg = IllegalSelfTypeClauseIdentifier())
+              val ValDef(name, tpt, _) = convertToParam(first)(errorMsg = IllegalSelfTypeClauseIdentifier(first))
               self = makeSelfDef(name, tpt).withPos(first.pos)
           }
           in.nextToken()
