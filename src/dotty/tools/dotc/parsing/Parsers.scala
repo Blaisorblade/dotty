@@ -533,7 +533,7 @@ object Parsers {
      *              |  [Ident `.'] this
      *
      *  @param thisOK   If true, [Ident `.'] this is acceptable as the path.
-     *                  If false, another selection is required aftre the `this`.
+     *                  If false, another selection is required after the `this`.
      *  @param finish   An alternative parse in case the token following a `.' is not an identifier.
      *                  If the alternative does not apply, its tree argument is returned unchanged.
      */
