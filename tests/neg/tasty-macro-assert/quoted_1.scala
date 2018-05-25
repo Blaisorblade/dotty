@@ -21,7 +21,10 @@ object Asserts {
     val tree = cond.toTasty
 
     def isOps(tpe: TypeOrBounds): Boolean = tpe match {
-      case Type.SymRef(DefDef("Ops", _, _, _, _), _) => true // TODO check that the parent is Asserts
+      case Type.SymRef(DefDef("Ops", _, _, _, _),
+        Type.SymRef(ValDef("Asserts", _, _),
+          Type.ThisType(Type.SymRef(PackageDef("<empty>", _), NoPrefix())))) =>
+        true
       case _ => false
     }
 
