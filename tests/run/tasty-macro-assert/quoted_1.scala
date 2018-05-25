@@ -22,8 +22,16 @@ object Asserts {
 
     def isOps(tpe: TypeOrBounds): Boolean = tpe match {
       case Type.SymRef(DefDef("Ops", _, _, _, _),
-        Type.SymRef(ValDef("Asserts", _, _),
+        pre @ Type.SymRef(ValDef("Asserts", _, _),
           Type.ThisType(Type.SymRef(PackageDef("<empty>", _), NoPrefix())))) =>
+        val tpeShow = tpe.show
+        val tpeShow1 = showExtractors.showTypeOrBounds(tpe)(u.context)
+        val preShow = pre.show
+        val preShow1 = showExtractors.showTypeOrBounds(pre)(u.context)
+        assert(tpeShow == tpeShow1)
+        assert(preShow == preShow1)
+        println(tpeShow)
+        println(preShow)
         true
       case _ => false
     }

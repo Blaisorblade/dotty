@@ -29,9 +29,9 @@ object TastyImpl extends scala.tasty.Tasty {
 
   // ===== Show =====================================================
 
-  def defaultShow: Show[this.type] = showExtractors
+  val showExtractors: Show[this.type] = new ShowExtractors(this)
 
-  def showExtractors: Show[this.type] = new ShowExtractors(this)
+  val defaultShow: Show[this.type] = showExtractors
 
   def showSourceCode: Show[this.type] = new ShowSourceCode(this)
 
