@@ -24,7 +24,7 @@ object definitions {
 
 // ------ Definitions ---------------------------------
 
-  trait Definition {
+  sealed trait Definition extends Statement {
     def owner: Definition = ???
   }
 
